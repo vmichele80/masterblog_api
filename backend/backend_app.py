@@ -16,6 +16,10 @@ POSTS = [
 def validate_post_data(data):
     if "title" not in data or "content" not in data:
         return False
+    # make sure no empty strings are submitted
+    if not data["title"].strip() or not data["content"].strip():
+        return False
+
     return True
 
 
@@ -50,6 +54,10 @@ def get_posts():
         # it means it is a GET request
         return jsonify(POSTS)
 
+# Need to implement the delete end point
+@app.route('/api/posts/<int:id>', methods=['DELETE'])
+def delete_post(id):
+    pass
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
