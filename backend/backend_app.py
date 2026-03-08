@@ -60,9 +60,28 @@ def get_posts():
 
     else:
         # it means it is a GET request
+        # I first capture the argument which can be possibly submitted
+        sort_parameter = request.args.get("sort")
+        direction_parameter = request.args.get("direction")
+
+        if sort_parameter is not None or direction_parameter is not None:
+            if sort_parameter not in ["title", "content"]:
+                return jsonify({"error": "Invalid sort field. Use 'title' or 'content'."}), 400
+
+            if direction_parameter not in ["asc", "desc"]:
+                return jsonify({"error": "Invalid direction. Use 'asc' or 'desc'."}), 400
+
+            # if the direction parameter is "desc" the reverse status becomes True
+            # and can be exchanged in the lambda formula
+            reverse_state = direction_parameter == "desc"
+
+            sorted_posts = sorted(POSTS, key=lambda post: post.get(sort_parameter, ""), reverse=reverse_state)
+            return jsonify(sorted_posts)
+
+
         return jsonify(POSTS)
 
-# Need to implement the delete end point
+
 @app.route('/api/posts/<int:id>', methods=['DELETE'])
 def delete_post(id):
     # Find the post with the given ID
