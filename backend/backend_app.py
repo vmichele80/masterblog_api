@@ -41,7 +41,7 @@ def get_posts():
         if not validate_post_data(new_post):
             return jsonify({"error": "Title and/or Content of the post are missing"}), 400
 
-        # Generate a new ID for the book
+        # Generate a new ID for the post
         new_id = max(post['id'] for post in POSTS) + 1
         new_post['id'] = new_id
 
@@ -51,10 +51,10 @@ def get_posts():
             "content": new_post["content"]
         }
 
-        # Add the new book to our list
+        # Add the new post to our list
         POSTS.append(saved_post)
 
-        # Return the new book data to the client
+        # Return the new post data to the client
         return jsonify(saved_post), 201
 
 
@@ -72,7 +72,7 @@ def delete_post(id):
     if post is None:
         return 'The selected post was not found', 404
 
-    # Remove the book from the list
+    # Remove the post from the list
     POSTS.remove(post)
 
     delete_confirmation_message = {"message": f"Post with id {id} has been deleted successfully."}
@@ -81,7 +81,7 @@ def delete_post(id):
 
 
 @app.route('/api/posts/<int:id>', methods=['PUT'])
-def handle_book(id):
+def update_post(id):
     # Find the post with the given ID
     post = find_post_by_id(id)
 
@@ -89,12 +89,32 @@ def handle_book(id):
     if post is None:
         return 'The selected post was not found', 404
 
-    # Update the book with the new data
+    # Update the post with the new data
     new_data = request.get_json()
     post.update(new_data)
 
-    # Return the updated book
+    # Return the updated post
     return jsonify(post)
+
+@app.route('/api/posts/search', methods=['GET'])
+def search_post():
+    # I first capture the argument which can be possibly submitted
+    title_query = request.args.get("title")
+    content_query = request.args.get("content")
+
+    # In this list I will save the post corresponding the query
+    results = []
+
+    # now I compare every post with the given arguments
+    for post in POSTS:
+        if title_query and title_query.lower() in post["title"].lower():
+            results.append(post)
+        elif content_query and content_query.lower() in post["content"].lower():
+            results.append(post)
+
+    return jsonify(results)
+
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
