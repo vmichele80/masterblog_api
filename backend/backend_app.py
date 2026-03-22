@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
-# deaktiviert die sortierung se elementen in der Json
+# It deactivates the sorting in the Json element
 app.config["JSON_SORT_KEYS"] = False
 app.json.sort_keys = False
 
@@ -13,14 +13,18 @@ POSTS = [
     {"id": 2, "title": "Second post", "content": "This is the second post."},
 ]
 
+
 def validate_post_data(data):
+    """Validate that title and content are present and not empty."""
+
     if "title" not in data or "content" not in data:
         return False
-    # make sure no empty strings are submitted
+    # Make sure no empty strings are submitted
     if not data["title"].strip() or not data["content"].strip():
         return False
 
     return True
+
 
 def find_post_by_id(post_id):
     """ Find the post with the id `post_id`.
@@ -31,8 +35,13 @@ def find_post_by_id(post_id):
 
     return None
 
+
 @app.route('/api/posts', methods=['GET', 'POST'])
 def get_posts():
+    """
+    On POST it adds a new post to the list,
+    on GET it gets the list of all the posts sorted
+    """
 
     if request.method == 'POST':
         # Get the new post data from the client
@@ -42,7 +51,11 @@ def get_posts():
             return jsonify({"error": "Title and/or Content of the post are missing"}), 400
 
         # Generate a new ID for the post
-        new_id = max(post['id'] for post in POSTS) + 1
+        if POSTS:
+            new_id = max(post['id'] for post in POSTS) + 1
+        else:
+            new_id = 1
+
         new_post['id'] = new_id
 
         saved_post = {
@@ -75,7 +88,10 @@ def get_posts():
             # and can be exchanged in the lambda formula
             reverse_state = direction_parameter == "desc"
 
-            sorted_posts = sorted(POSTS, key=lambda post: post.get(sort_parameter, ""), reverse=reverse_state)
+            sorted_posts = sorted(POSTS,
+                                  key=lambda post: post.get(sort_parameter, ""),
+                                  reverse=reverse_state
+                                  )
             return jsonify(sorted_posts)
 
 
@@ -84,12 +100,13 @@ def get_posts():
 
 @app.route('/api/posts/<int:id>', methods=['DELETE'])
 def delete_post(id):
+    """It deletes a post on a DELETE request"""
     # Find the post with the given ID
     post = find_post_by_id(id)
 
     # If the post wasn't found, return a 404 error
     if post is None:
-        return 'The selected post was not found', 404
+        return jsonify({"error": "The selected post was not found"}), 404
 
     # Remove the post from the list
     POSTS.remove(post)
@@ -101,12 +118,14 @@ def delete_post(id):
 
 @app.route('/api/posts/<int:id>', methods=['PUT'])
 def update_post(id):
+    """Update the title or content of a post."""
+
     # Find the post with the given ID
     post = find_post_by_id(id)
 
     # If the post wasn't found, return a 404 error
     if post is None:
-        return 'The selected post was not found', 404
+        return jsonify({"error": "The selected post was not found"}), 404
 
     # Update the post with the new data
     new_data = request.get_json()
@@ -115,8 +134,11 @@ def update_post(id):
     # Return the updated post
     return jsonify(post)
 
+
 @app.route('/api/posts/search', methods=['GET'])
 def search_post():
+    """It searches for the posts corresponding
+    to the given input"""
     # I first capture the argument which can be possibly submitted
     title_query = request.args.get("title")
     content_query = request.args.get("content")
